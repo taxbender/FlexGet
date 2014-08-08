@@ -1,0 +1,123 @@
+# Flexget config file
+#
+# Created by:
+# Available at: https://github/
+#
+#
+#
+# Version 0.1
+#
+
+templates:
+
+  # Global settings apply to all items found in feed
+  global:
+    include: [ private_global_config.yml ]
+
+    # Make sure there is at least 50GB free on HD
+    free_space:
+      path: /
+      space: 50000
+
+    # Make sure all fileanames are Windows/Samba safe
+    pathscrub: windows
+
+    # Items that cause problems and / or are undesirable are permanently rejected
+    #   Syntax tester is available at http://www.regexr.com
+    regexp:
+      reject:
+        - (s|d)ub(s|bed)?\b: {from: title}                         # Block subbed/dubbed titles
+        - \b(duo|trio|quadri|tetra|penta)logy\b: {from: title}     # Block series items; Only accept single entries
+        - \b3-?D\b: {from: title}                                  # Block 3D items
+        - \btrailer\b: {from: title}                               # Block trailers
+        - \bR5\b: {from: title}                                    # Block certain low quality items
+        - \bWEBSCR\b: {from: title}                                # Block certain low quality items
+        - \bscreener\b: {from: title}                              # Block screener items
+        - \bTS\b: {from: title}                                    # Block DVD/BRD TS items
+        - \bCam\b: {from: title}                                   # Block camera filmed items
+        - '{C_P}': {from: title}                                   # Block low quality group
+        - TrTd TeaM: {from: title}                                 # Block low quality group
+        - \[TNTVillage\]: {from: title}                            # Block low quality group
+        - \[facepalm\]: {from: title}                              # Block low quality group
+        - \bASAP\b: {from: title}                                  # Block low quality group
+
+    # Require at least 50 seeders; Delay for 24 hours if minimum not met
+    torrent_alive:
+      min_seeds: 50
+      reject_for: 24 hours
+
+    # Filter by file types.
+    content_filter:
+      require:
+        - '*.mkv'
+        - '*.mp4'
+
+      reject:
+        - 'password.*'                                             # Block anything with a password file
+        - '*.wmv'                                                  # Block all Windows media files
+        - '*.r*'                                                   # Block all r0 / rar files
+        - '*.part*'                                                # Block all partial file types; e.g. .part0
+
+    # Email settings
+    email:
+      from: XXXXX@gmail.com
+      to: XXXXX@gmail.com
+      subject: 'FlexGet Update'
+      smtp_host: smtp.gmail.com
+      smtp_port: 587
+      smtp_login: True
+      smtp_username: XXXXX@gmail.com
+      smtp_password: xxxxxxxxxxxxxxxxxxxx
+      smtp_tls: true
+      template: html
+
+
+  tv_global:
+    # include: [ private_tv_global_config.yml ]
+
+    # TV rss feeds
+    inputs:
+      - rss: { url: 'http://ezrss.it/feed/', silent: yes }                    # EzRSS
+      - rss: { url: 'http://torrentz.eu/feed_verified?=tv' , silent: yes}     # Torrentz; Verified TV only
+      - rss: { url: 'http://rss.bt-chat.com/?group=3', silent: yes}           # BT-Chat (EzTV)
+      - rss: { url: 'http://rss.thepiratebay.se/208' , silent: yes}           # The Pirate Bay (Highres TV)
+
+    # File size constraints
+    content_size:
+      max: 5000
+      min: 50
+
+    # Look up info on TheTVDB.com to fill in extra meta info
+    thetvdb_lookup: yes
+
+    # Accepted items are added to client with modified filename
+    set:
+      content_filename: >
+        {{ series_name|replace('/', "_")|replace(':',' -') }} - {{ tvdb_season_id|default(season_id) }}{{ tvdb_ep_id|default(series_id) }}
+
+# This it all comes together. Tasks are where we tell flexget to do something.
+tasks:
+  tv:
+    priority: 1
+
+    # List of shows is stored in a separate file.
+    include:
+      - private_tv_list.yml
+
+    # Use the listed templates to process the list
+    template:
+      - tv_global
+
+    quality: HDTV+
+    set:
+      label: tv
+
+
+schedules:
+
+  #
+  # TV Series
+  #
+  - tasks: [tv]
+    interval:
+      hours: 1
