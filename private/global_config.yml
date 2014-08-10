@@ -17,3 +17,4 @@ email:
   smtp_username: FromUserName
   smtp_password: FromPassword
   smtp_tls: yes
+  template: html
