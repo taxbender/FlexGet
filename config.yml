@@ -90,7 +90,7 @@ tasks:
 
     # List of shows is stored in a separate file.
     include:
-      - private_tv_list.yml
+      - private/tv_list.yml
 
     # Use the listed templates to process the list
     template:
