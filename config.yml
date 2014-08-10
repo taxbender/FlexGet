@@ -61,9 +61,8 @@ templates:
         - '*.part*'                                                # Block all partial file types; e.g. .part0
 
   tv_global:
-    # include: [ private_tv_global_config.yml ]
-
-    # TV rss feeds
+ 
+     # TV rss feeds
     inputs:
       - rss: { url: 'http://ezrss.it/feed/', silent: yes }                    # EzRSS
       - rss: { url: 'http://torrentz.eu/feed_verified?=tv' , silent: yes}     # Torrentz; Verified TV only
@@ -79,16 +78,17 @@ templates:
     thetvdb_lookup: yes
 
     # Accepted items are added to client with modified filename
+    # Does not seem to work with Transmission; Should work with Deluge
     set:
       content_filename: >
         {{ series_name|replace('/', "_")|replace(':',' -') }} - {{ tvdb_season_id|default(season_id) }}{{ tvdb_ep_id|default(series_id) }}
 
-# This it all comes together. Tasks are where we tell flexget to do something.
+# Tasks are used to schedule daemon task when FlexGet is run in daemon mode
 tasks:
   tv:
     priority: 1
 
-    # List of shows is stored in a separate file.
+    # List of shows is stored in a separate file; Makes it easier to add/remove shows.
     include:
       - private/tv_list.yml
 
