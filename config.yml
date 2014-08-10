@@ -5,14 +5,16 @@
 #
 #
 #
-# Version 0.1
+# Version 0.2
 #
 
 templates:
 
   # Global settings apply to all items found in feed
   global:
-    include: [ private_global_config.yml ]
+  
+    # Private config settings for transmission and email notifications
+    include: [ private/global_config.yml ]
 
     # Make sure there is at least 50GB free on HD
     free_space:
@@ -57,20 +59,6 @@ templates:
         - '*.wmv'                                                  # Block all Windows media files
         - '*.r*'                                                   # Block all r0 / rar files
         - '*.part*'                                                # Block all partial file types; e.g. .part0
-
-    # Email settings
-    email:
-      from: XXXXX@gmail.com
-      to: XXXXX@gmail.com
-      subject: 'FlexGet Update'
-      smtp_host: smtp.gmail.com
-      smtp_port: 587
-      smtp_login: True
-      smtp_username: XXXXX@gmail.com
-      smtp_password: xxxxxxxxxxxxxxxxxxxx
-      smtp_tls: true
-      template: html
-
 
   tv_global:
     # include: [ private_tv_global_config.yml ]
