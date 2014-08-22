@@ -14,7 +14,7 @@ templates:
   global:
   
     # Private config settings for transmission and email notifications
-    include: [ private/global_config.yml ]
+    include: [ private_global.yml ]
 
     # Make sure there is at least 50GB free on HD
     free_space:
