@@ -1,9 +1,10 @@
 # Flexget config file
 #
-# Created by:
+# Created by: taxbender
 # Available at: https://github/
 #
-#
+# Based on this jawilson's work at: 
+#  https://github.com/jawilson/Flexget
 #
 # Version 0.2
 #
@@ -14,7 +15,7 @@ templates:
   global:
   
     # Private config settings for transmission and email notifications
-    include: [ private_global.yml ]
+    include: [ private/global.yml ]
 
     # Make sure there is at least 50GB free on HD
     free_space:
@@ -90,7 +91,7 @@ tasks:
 
     # List of shows is stored in a separate file; Makes it easier to add/remove shows.
     include:
-      - private/tv_list.yml
+      - private/tvshowlist.yml
 
     # Use the listed templates to process the list
     template:
