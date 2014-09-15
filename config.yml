@@ -91,7 +91,7 @@ tasks:
 
     # List of shows is stored in a separate file; Makes it easier to add/remove shows.
     include:
-      - private/tvshowlist.yml
+      - private/tvshows.yml
 
     # Use the listed templates to process the list
     template:
