@@ -1,40 +1,31 @@
-# Flexget config file
-#
-# Created by: taxbender
-# Available at: https://github/
-#
-# Based on jawilson's work at: 
-#  https://github.com/jawilson/Flexget
-#
-# Version 0.2
-#
-
 templates:
+  trans:
+    transmission:
+      host: localhost
+      username: transmission
+      password: transmission
+      addpaused: no
 
-  # Global settings apply to all items found in feed
-  global:
-  
-    # Private config settings for transmission and email notifications
-    include: [ private/global.yml ]
+  notify:
+    email:
+      from: from@gmail.com
+      to: to@gmail.com
+      smtp_host: smtp.gmail.com
+      smtp_port: 587
+      smtp_username: from@gmail.com
+      smtp_password: from_password
+      smtp_tls: yes
+      template: default
 
-    # Make sure there is at least 50GB free on HD
-    free_space:
-      path: /
-      space: 50000
-
-    # Make sure all fileanames are Windows/Samba safe
-    pathscrub: windows
-
-    # Items that cause problems and / or are undesirable are permanently rejected
-    #   Syntax tester is available at http://www.regexr.com
+  quality_checks:
     regexp:
       reject:
         - (s|d)ub(s|bed)?\b: {from: title}                         # Block subbed/dubbed titles
-        - \b(duo|trio|quadri|tetra|penta)logy\b: {from: title}     # Block series items; Only accept single entries
+        - \b(duo|trio|quadri|tetra|penta)logy\b: {from: title}     # Block series items
         - \b3-?D\b: {from: title}                                  # Block 3D items
         - \btrailer\b: {from: title}                               # Block trailers
-        - \bR5\b: {from: title}                                    # Block certain low quality items
-        - \bWEBSCR\b: {from: title}                                # Block certain low quality items
+        - \bR5\b: {from: title}                                    # Block low quality stuff
+        - \bWEBSCR\b: {from: title}                                # Block low quality stuff
         - \bscreener\b: {from: title}                              # Block screener items
         - \bTS\b: {from: title}                                    # Block DVD/BRD TS items
         - \bCam\b: {from: title}                                   # Block camera filmed items
@@ -43,70 +34,103 @@ templates:
         - \[TNTVillage\]: {from: title}                            # Block low quality group
         - \[facepalm\]: {from: title}                              # Block low quality group
         - \bASAP\b: {from: title}                                  # Block low quality group
+        - \bYIFY\b: {from: title}                                  # Block low quality group
 
-    # Require at least 50 seeders; Delay for 24 hours if minimum not met
-    torrent_alive:
-      min_seeds: 50
-      reject_for: 24 hours
-
-    # Filter by file types.
+    # File content filters
     content_filter:
+
+      # Only these types of files are allowed
       require:
         - '*.mkv'
         - '*.mp4'
 
+      # Reject files / torrents with any of these characteristics
       reject:
-        - 'password.*'                                             # Block anything with a password file
+        - 'password.*'                                             # Block anything with a password
         - '*.wmv'                                                  # Block all Windows media files
         - '*.r*'                                                   # Block all r0 / rar files
-        - '*.part*'                                                # Block all partial file types; e.g. .part0
+        - '*.part*'                                                # Block all partial file types
 
-  tv_global:
- 
-     # TV rss feeds
+
+tasks:
+
+  # Queue up movies from IMDB watchlist
+  movie_q:
+
+    priority: 1
+
+    imdb_list:
+      user_id: userid #public user_id
+      list: watchlist
+
+    # Accept all entries from IMDB watchlist
+    accept_all: yes
+    movie_queue: add
+
+  # Get movies from movie queue
+  movie_get:
+
+    priority: 2
+
+    template:
+      - trans
+      - notify
+      - quality_checks
+
+    # Gets movie list from movie queue
+    movie_queue: accept
+
+    # Reject any movies in queue that exist in movie directory
+    exists_movie: /home/DIR/media/movies/
+
+    # Inputs
     inputs:
-      - rss: { url: 'http://ezrss.it/feed/', silent: yes }                    # EzRSS
-      - rss: { url: 'http://torrentz.eu/feed_verified?=tv' , silent: yes}     # Torrentz; Verified TV only
-      - rss: { url: 'http://rss.bt-chat.com/?group=3', silent: yes}           # BT-Chat (EzTV)
-      - rss: { url: 'http://rss.thepiratebay.se/208' , silent: yes}           # The Pirate Bay (Highres TV)
+      - rss: { url: 'https://kat.cr/usearch/category%3Ahighres-movies%20verified%3A1/?rss=1' , silent: yes }
 
     # File size constraints
     content_size:
-      max: 5000
-      min: 50
+      max: 6000
+      min: 1250
 
-    # Look up info on TheTVDB.com to fill in extra meta info
-    thetvdb_lookup: yes
+    quality: 720p hdtv+
 
-    # Accepted items are added to client with modified filename
-    # Does not seem to work with Transmission; Should work with Deluge
+    # Set destination
     set:
-      content_filename: >
-        {{ series_name|replace('/', "_")|replace(':',' -') }} - {{ tvdb_season_id|default(season_id) }}{{ tvdb_ep_id|default(series_id) }}
-
-# Tasks are used to schedule daemon task when FlexGet is run in daemon mode
-tasks:
+      path: /home/DIR/transmission/movies/
+      main_file_only: yes
+      content_filename: '{{imdb_name}} ({{imdb_year}})'
+      ratio: 0.1
   tv:
-    priority: 1
-
-    # List of shows is stored in a separate file; Makes it easier to add/remove shows.
-    include:
-      - private/tvshows.yml
-
-    # Use the listed templates to process the list
     template:
-      - tv_global
+      - trans
+      - notify
+      - quality_checks
 
-    quality: HDTV+
+    # Get entries from personal TvDB watchlist
+    configure_series:
+      from:
+        thetvdb_favorites:
+          account_id: account_id  #TvDB account ID
+
+    # Reject any episode from TvDB that exists in tv directory
+    exists_series: /home/DIR/media/tv/
+
+    # Inputs
+    inputs:
+      - rss: { url: 'https://kat.cr/usearch/category%3Atv%20seeds%3A500%20verified%3A1/?rss=1' , silent: yes }
+
+    # File size constraints
+    content_size:
+      max: 3000
+      min: 500
+
+    quality: 720p hdtv+
+
+    torrent_alive: 500
+
+    # Set destination
     set:
-      label: tv
-
-
-schedules:
-
-  #
-  # TV Series
-  #
-  - tasks: [tv]
-    interval:
-      hours: 1
+      path: /home/DIR/transmission/tv
+      main_file_only: yes
+      content_filenemt: '{{ tvdb_series_name }} - {{ tvdb_season|pad(2) }}{{ tvdb_episode|pad(2) }}'
+      ratio: 0.1
